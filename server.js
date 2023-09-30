@@ -48,13 +48,42 @@ io.on('connection', (socket) => {
         console.log(incomingMessage)
         addNewMessage(incomingMessage)
     })
-});
 
+    //new message change
+    socket.on('jsonFileChanged',updtedMessages=>{
+        console.log("updated messages")
+        console.log(updtedMessages)
+    })
+});
 
 // Start the server and listen on port 3000
 server.listen(3000, () => {
     console.log('Server listening on *:3000');
 });
+
+
+
+
+const filePath = './public/messages.json';
+
+// Watch for changes in the messages.json file
+let isProcessing = false;
+fs.watch(filePath, (eventType, filename) => {
+    if (!isProcessing && filename) {
+        isProcessing = true;
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                throw err;
+            }
+            const jsonData = JSON.parse(data);
+            const lastMessage = jsonData[jsonData.length - 1];
+            io.emit('updateMessages', lastMessage);
+            isProcessing = false;
+        });
+        console.log(`File ${filename} changed: ${eventType}`);
+    }  
+});
+
 
 function addNewMessage(newObject) {
     const filePath = 'public/messages.json';
