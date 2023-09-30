@@ -1,5 +1,5 @@
 const socket = io('http://localhost:3000');
-var messagesUpdated = false;
+var messagesUpdated = false; // Only load old messages once for every user 
 
 function sendPushMsg() {
     // Get the message from the input field
@@ -9,22 +9,19 @@ function sendPushMsg() {
     isAdmin:true
   }
   
-  socket.emit('push message incoming',message)
+  socket.emit('message incoming',message)
   pushMessage=''
 }
 
 
 
 socket.on('updateMessages',updatedMessage=>{
-  console.log("updateMessages socket running " )
-  console.log(updatedMessage)
   addMessageToList(updatedMessage.message)
   
 })
 
 socket.on('loadMessages',allMessages=>{
-  console.log('loadMessages socket running! ')
-  console.log('already updated : ',messagesUpdated)
+   
   if(!messagesUpdated){
     allMessages.forEach(element => {
       if(element.isAdmin){ 
@@ -38,9 +35,9 @@ socket.on('loadMessages',allMessages=>{
 
 // Function to add new message to the messages list
 function addMessageToList(message) {
-  console.log('addMessage function running!')
   const messagesList = document.getElementById('messagesList');
   const listItem = document.createElement('li');
   listItem.textContent = message;
   messagesList.appendChild(listItem); // Append the new li element to messagesList
 }
+

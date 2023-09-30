@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const fs = require('fs');
-// Create an Express application
+const { filterMessages } = require('./helpers/helperFunctions'); 
 const app = express();
 app.use(express.static('public'));
 
@@ -33,9 +33,7 @@ io.on('connection', (socket) => {
     if (!emittedUsers.has(socket.id)) {
         // Emit the message to the user
         console.log('A new user connected with id : ',socket.id);
-        
         const oldMessages = allMessages();
-
         io.emit('loadMessages',oldMessages) 
         emittedUsers.add(socket.id);
         console.log('all users: ',emittedUsers)
@@ -58,7 +56,7 @@ io.on('connection', (socket) => {
     });
 
     //Add message to message.json
-    socket.on('push message incoming',incomingMessage =>{
+    socket.on('message incoming',incomingMessage =>{
         addNewMessage(incomingMessage)
     })
 
@@ -76,14 +74,11 @@ server.listen(3000, () => {
 
 
 
-
-
-
 // Watch for changes in the messages.json file
 let isProcessing = false;
 fs.watch(filePath, (eventType, filename) => {
     if (!isProcessing && filename) {
-        isProcessing = true;
+        isProcessing = true; //Prevent trigger multiple times for single change 
         fs.readFile(filePath, (err, data) => {
             if (err) {
                 throw err;
@@ -100,7 +95,7 @@ fs.watch(filePath, (eventType, filename) => {
  
 function addNewMessage(newObject) {
     
-
+    console.log("ADDING TO MESSAGES JSON")
     // Read the existing JSON data from the file
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
@@ -138,8 +133,8 @@ function generateRandomInteger() {
 function allMessages() {
     try {
         const jsonData = fs.readFileSync(filePath, 'utf8');
-        //console.log(jsonData)
-        return JSON.parse(jsonData);
+        const messages = JSON.parse(jsonData);
+        return filterMessages(messages,-10)
     } catch (error) {
         console.error('Error reading JSON file:', error);
         return null;
