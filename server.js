@@ -24,6 +24,19 @@ app.get('/admin', (req, res) => {
     res.sendFile(__dirname + '/views/admin.html');
 });
 
+app.get('/download', (req, res) => { // Download the messages
+    // Read the JSON file
+    const jsonData = require(filePath);
+
+    // Set response headers for file download
+    res.setHeader('Content-Disposition', 'attachment; filename=messages.json');
+    res.setHeader('Content-Type', 'application/json');
+
+    // Send the JSON data as a response
+    res.send(jsonData);
+});
+
+
 // Create a set to store emitted users
 const emittedUsers = new Set();
 
