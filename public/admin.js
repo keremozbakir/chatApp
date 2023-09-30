@@ -8,6 +8,7 @@ function sendPushMsg() {
     message:pushMessage,
     isAdmin:true
   }
+  
   socket.emit('push message incoming',message)
   pushMessage=''
 }
@@ -19,6 +20,15 @@ socket.on('updateMessages',updatedMessage=>{
   console.log(updatedMessage)
   addMessageToList(updatedMessage.message)
   
+})
+
+socket.on('loadMessages',allMessages=>{
+ allMessages.forEach(element => {
+  if(element.isAdmin){ 
+    addMessageToList(element.message) // only view admin messages which are push messages
+  }
+  
+ });
 })
 
 // Function to add new message to the messages list

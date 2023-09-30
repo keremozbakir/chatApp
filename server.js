@@ -9,7 +9,7 @@ app.use(express.static('public'));
 
 // Create an HTTP server by passing the Express app
 const server = http.createServer(app);
-
+const filePath = './public/messages.json';
 // Create a Socket.io instance by passing the server
 const io = socketIo(server);
 
@@ -28,7 +28,13 @@ app.get('/admin', (req, res) => {
 // Handle Socket.io connections
 io.on('connection', (socket) => {
     console.log('A user connected');
-
+    const oldMessages = allMessages();
+    if(oldMessages){
+        console.log('hereee')
+        io.emit('loadMessages',oldMessages) 
+    }
+    
+     
     // Handle messages from clients
     socket.on('chat message', (msg) => {
         console.log('Message: ' + msg);
@@ -64,7 +70,7 @@ server.listen(3000, () => {
 
 
 
-const filePath = './public/messages.json';
+
 
 // Watch for changes in the messages.json file
 let isProcessing = false;
@@ -84,9 +90,9 @@ fs.watch(filePath, (eventType, filename) => {
     }  
 });
 
-
+ 
 function addNewMessage(newObject) {
-    const filePath = 'public/messages.json';
+    
 
     // Read the existing JSON data from the file
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -120,4 +126,15 @@ function generateRandomInteger() {
     const min = 1000000; // Minimum 7-digit number
     const max = 9999999; // Maximum 7-digit number
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function allMessages() {
+    try {
+        const jsonData = fs.readFileSync(filePath, 'utf8');
+        //console.log(jsonData)
+        return JSON.parse(jsonData);
+    } catch (error) {
+        console.error('Error reading JSON file:', error);
+        return null;
+    }
 }
