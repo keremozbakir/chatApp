@@ -24,15 +24,24 @@ app.get('/admin', (req, res) => {
     res.sendFile(__dirname + '/views/admin.html');
 });
 
+// Create a set to store emitted users
+const emittedUsers = new Set();
 
 // Handle Socket.io connections
 io.on('connection', (socket) => {
-    console.log('A user connected');
-    const oldMessages = allMessages();
-    if(oldMessages){
-        console.log('hereee')
+   // console.log('A user connected');
+    if (!emittedUsers.has(socket.id)) {
+        // Emit the message to the user
+        console.log('A new user connected with id : ',socket.id);
+        
+        const oldMessages = allMessages();
+
         io.emit('loadMessages',oldMessages) 
+        emittedUsers.add(socket.id);
+        console.log('all users: ',emittedUsers)
+        
     }
+    
     
      
     // Handle messages from clients
@@ -48,10 +57,8 @@ io.on('connection', (socket) => {
         console.log('User disconnected');
     });
 
-    //Handle incoming push messages
+    //Add message to message.json
     socket.on('push message incoming',incomingMessage =>{
-        console.log("new message: ")
-        console.log(incomingMessage)
         addNewMessage(incomingMessage)
     })
 

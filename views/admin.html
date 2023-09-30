@@ -49,12 +49,8 @@
 <script defer src="http://localhost:3000/socket.io/socket.io.js"></script>
 <script defer src="../admin.js"></script>
 <script>
-    // Get the button element by its class name
-    var pushNotificationButton = document.querySelector('.pushSend');
-    
-    // Add click event listener to the button
-    pushNotificationButton.addEventListener('click', function() {
-        // Call the function from admin.js when the button is clicked
+   var pushNotificationButton = document.querySelector('.pushSend');
+   pushNotificationButton.addEventListener('click', function() {
         sendPushMsg();
     });
 </script>

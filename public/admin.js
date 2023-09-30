@@ -1,5 +1,5 @@
 const socket = io('http://localhost:3000');
-
+var messagesUpdated = false;
 
 function sendPushMsg() {
     // Get the message from the input field
@@ -16,23 +16,29 @@ function sendPushMsg() {
 
 
 socket.on('updateMessages',updatedMessage=>{
-  console.log("adminjs running after message updated " )
+  console.log("updateMessages socket running " )
   console.log(updatedMessage)
   addMessageToList(updatedMessage.message)
   
 })
 
 socket.on('loadMessages',allMessages=>{
- allMessages.forEach(element => {
-  if(element.isAdmin){ 
-    addMessageToList(element.message) // only view admin messages which are push messages
+  console.log('loadMessages socket running! ')
+  console.log('already updated : ',messagesUpdated)
+  if(!messagesUpdated){
+    allMessages.forEach(element => {
+      if(element.isAdmin){ 
+        addMessageToList(element.message) // only view admin messages which are push messages
+      }
+     });
+     messagesUpdated=true
   }
   
- });
 })
 
 // Function to add new message to the messages list
 function addMessageToList(message) {
+  console.log('addMessage function running!')
   const messagesList = document.getElementById('messagesList');
   const listItem = document.createElement('li');
   listItem.textContent = message;
