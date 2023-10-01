@@ -42,8 +42,7 @@ socket.on('loadMessages',allMessages=>{
 // Function to add new message to the messages list
 function addMessageToList(message) {
   //if(message.isAdmin === false){return}
-  console.log("mesaj bu : ")
-  console.log(message)
+ 
   const messagesList = document.getElementById('messagesList');
   const listItem = document.createElement('li');
   listItem.textContent = message;

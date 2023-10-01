@@ -17,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.json()); // Enable JSON request body parsing middleware
 app.use(cors());
+require('dotenv').config(); 
 // Create an HTTP server by passing the Express app
 const server = http.createServer(app);
 const filePath = './public/messages.json';
@@ -41,14 +42,10 @@ app.get('/login', (req, res) => {
 
 
 app.post('/login', (req, res) => {
-    const email = req.body.email
-    const password = req.body.password
-    console.log("email: ",email)
-    console.log("password: ",password)
- 
-    // Hardcoded email and password for authentication
-    const hardcodedEmail = 'kerem';
-    const hardcodedPassword = 'kerem4022';
+    const {email,password} =req.body;
+  
+    const hardcodedEmail =process.env.ADMIN_EMAIL;
+    const hardcodedPassword =process.env.ADMIN_PASSWORD;
 
     // Check if the provided email and password match the hardcoded values
     if (email === hardcodedEmail && password === hardcodedPassword) {
@@ -154,8 +151,8 @@ io.on('connection', (socket) => {
 });
 
 // Start the server and listen on port 3000
-server.listen(3000, () => {
-    console.log('Server listening on *:3000');
+server.listen(process.env.PORT || 3000, () => {
+    console.log('Server listening on :'+process.env.PORT);
 });
 
 

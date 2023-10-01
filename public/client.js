@@ -87,14 +87,15 @@ function loginUser(email, password) {
         body: JSON.stringify({ email, password })
     })
     .then(response => {
+        
         if (response.redirected) {
             window.location.href = response.url; // Redirect to the URL sent by the server
-        } else {
+        } else if(response.status === 401) {
+            document.getElementById('error-message').textContent = 'Invalid email or password. Please try again.'; // Sending error message on wrong credentials
+
+        }else{
             return response.json(); // Handle other responses if needed
         }
-    })
-    .then(data => {
-        // Handle JSON response if needed
     })
     .catch(error => {
         // Handle errors if any
