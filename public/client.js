@@ -33,7 +33,7 @@ socket.on('updateMessages',updatedMessage=>{
 function addMessageToListClient(message, messageType ) {
     console.log('addMessage function running!', message);
     const messagesList = document.getElementById(messageType);
-    const listItem = document.createElement('li');
+    const listItem = document.createElement('div');
     listItem.textContent = message;
     messagesList.appendChild(listItem); // Append the new li element to messagesList
     
