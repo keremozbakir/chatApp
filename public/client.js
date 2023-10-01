@@ -2,15 +2,15 @@ const socket = io('http://localhost:3000');
 var messagesUpdated = false; // Only load old messages once for every user 
 var maxMessage = 10
 var loadMore = false;
+
 socket.on('loadMessages',allMessages=>{
-    console.log('loadMessages socket running! ')
-    console.log('already updated : ',messagesUpdated)
+ 
     if(!messagesUpdated){
       allMessages.forEach(element => {
         if(element.isAdmin){ 
-          addMessageToListClient(element.message,'pushMessages') // only view admin messages which are push messages
+          addMessageToListClient(element,'pushMessages') // only view admin messages which are push messages
         }else{
-            addMessageToListClient(element.message,'chatMessages') // only chat messages
+            addMessageToListClient(element,'chatMessages') // only chat messages
         }
        });
        messagesUpdated=true
@@ -18,23 +18,27 @@ socket.on('loadMessages',allMessages=>{
 })
 
 socket.on('updateMessages',updatedMessage=>{
-    console.log("updateMessages socket running on client side" )
-    console.log(updatedMessage)
+    
     if(updatedMessage.isAdmin){
-        addMessageToListClient(updatedMessage.message,'pushMessages') // only view admin messages which are push messages
+        addMessageToListClient(updatedMessage,'pushMessages') // only view admin messages which are push messages
     }else{
-        addMessageToListClient(updatedMessage.message,'chatMessages') // only chat messages
+        addMessageToListClient(updatedMessage,'chatMessages') // only chat messages
     }
 })
-
-
+ 
+socket.on('delete push from dom',incomingIDS=>{
+    console.log('delete push from dom running client.js')
+    deletePushMessageView(incomingIDS)
+})
  
 
-function addMessageToListClient(message, messageType ) {
-    console.log('addMessage function running!', message);
+function addMessageToListClient(messageObject, messageType ) {
+    console.log('addMessage function running!', messageObject.message );
     const messagesList = document.getElementById(messageType);
     const listItem = document.createElement('div');
-    listItem.textContent = message;
+    listItem.textContent = messageObject.message;
+    listItem.className = 'single-message';
+    listItem.setAttribute('data-message-id', messageObject.id);
     messagesList.appendChild(listItem); // Append the new li element to messagesList
     
     if(messageType==='chatMessages'){ // limit only chat messages not push messages
@@ -103,7 +107,26 @@ function loginUser(email, password) {
     });
 }
 
-    
+
+
+function deletePushMessageView(arrayOfIds) {  //  remove element from the DOM
+  var elementsToDelete = {};
+  // Find elements with specified message IDs and store them in the elementsToDelete object
+  arrayOfIds.forEach(function(messageId) {
+      var element = document.querySelector('[data-message-id="' + messageId + '"]');
+      if (element) {
+          elementsToDelete[messageId] = element;
+      }
+  });
+  // Remove elements from the DOM
+  Object.keys(elementsToDelete).forEach(function(messageId) {
+      var element = elementsToDelete[messageId];
+      var parentElement = element.parentNode;
+      parentElement.removeChild(element);
+  });
+
+ // socket.emit('delete push from dom',checkedMessageIds) // passing list of message ids of push messages to be deleted from DOM
+}
  
 
 

@@ -148,6 +148,13 @@ io.on('connection', (socket) => {
         console.log("updated messages")
         console.log(updtedMessages)
     })
+
+    socket.on('delete push from dom',incomingIDS=>{
+        console.log("on ...")
+        io.emit('delete push from dom',incomingIDS)
+        console.log("emit ...")
+
+    })
 });
 
 // Start the server and listen on port 3000
