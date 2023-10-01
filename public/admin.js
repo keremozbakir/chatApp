@@ -1,22 +1,28 @@
 const socket = io('http://localhost:3000');
 var messagesUpdated = false; // Only load old messages once for every user 
 
+
 function sendPushMsg() {
-    // Get the message from the input field
-  var pushMessage = document.getElementById('pushInput').value
-  var message ={
-    message:pushMessage,
-    isAdmin:true
+  var messageInput = document.getElementById('pushInput');
+  var messageText = messageInput.value.trim();  
+  if (messageText !== "") {  
+      var message = {
+          message: messageText,
+          isAdmin: true
+      };
+      socket.emit('message incoming', message);   
+      messageInput.value = '';  
+  } else {
+      console.log('Empty message, not sending.');  
   }
-  
-  socket.emit('message incoming',message)
-  pushMessage=''
 }
 
-
-
 socket.on('updateMessages',updatedMessage=>{
-  addMessageToList(updatedMessage.message)
+  console.log("Update message running on admin.js")
+  if(updatedMessage.isAdmin){
+    addMessageToList(updatedMessage.message)
+  }
+  
   
 })
 
@@ -35,9 +41,15 @@ socket.on('loadMessages',allMessages=>{
 
 // Function to add new message to the messages list
 function addMessageToList(message) {
+  //if(message.isAdmin === false){return}
+  console.log("mesaj bu : ")
+  console.log(message)
   const messagesList = document.getElementById('messagesList');
   const listItem = document.createElement('li');
   listItem.textContent = message;
   messagesList.appendChild(listItem); // Append the new li element to messagesList
 }
 
+function downloadMessages(){
+  window.location.href = '/download';
+}

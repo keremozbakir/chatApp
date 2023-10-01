@@ -77,6 +77,34 @@ function loadMoreMessage() { // Option to load additional 5 more messages .Defau
 }
 
 
+function loginUser(email, password) {
+    
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url; // Redirect to the URL sent by the server
+        } else {
+            return response.json(); // Handle other responses if needed
+        }
+    })
+    .then(data => {
+        // Handle JSON response if needed
+    })
+    .catch(error => {
+        // Handle errors if any
+        console.error('Error:', error);
+    });
+}
+
+    
+ 
+
 
 
 

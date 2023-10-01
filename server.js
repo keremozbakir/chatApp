@@ -4,9 +4,19 @@ const http = require('http');
 const socketIo = require('socket.io');
 const fs = require('fs');
 const { filterMessages } = require('./helpers/helperFunctions'); 
+const { authenticate} = require('./middlewares/auth')
+const jwt = require('jsonwebtoken');
 const app = express();
-app.use(express.static('public'));
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const secretkey = 'benimadimkerem'
+const cors = require('cors'); 
 
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.json()); // Enable JSON request body parsing middleware
+app.use(cors());
 // Create an HTTP server by passing the Express app
 const server = http.createServer(app);
 const filePath = './public/messages.json';
@@ -20,21 +30,84 @@ app.get('/', (req, res) => {
 
 
 // Serve the client-side HTML file on the root URL
-app.get('/admin', (req, res) => {
+app.get('/admin', authenticate,(req, res) => {
     res.sendFile(__dirname + '/views/admin.html');
 });
 
-app.get('/download', (req, res) => { // Download the messages
-    // Read the JSON file
-    const jsonData = require(filePath);
-
-    // Set response headers for file download
-    res.setHeader('Content-Disposition', 'attachment; filename=messages.json');
-    res.setHeader('Content-Type', 'application/json');
-
-    // Send the JSON data as a response
-    res.send(jsonData);
+// Render login page
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/views/login.html');
 });
+
+
+app.post('/login', (req, res) => {
+    const email = req.body.email
+    const password = req.body.password
+    console.log("email: ",email)
+    console.log("password: ",password)
+ 
+    // Hardcoded email and password for authentication
+    const hardcodedEmail = 'kerem';
+    const hardcodedPassword = 'kerem4022';
+
+    // Check if the provided email and password match the hardcoded values
+    if (email === hardcodedEmail && password === hardcodedPassword) {
+        // Valid credentials, create a JWT token
+        const user = {
+            email: hardcodedEmail
+        };
+        const token = jwt.sign(user, secretkey, { expiresIn: '1h' });
+
+        // Set the JWT token as a cookie
+        res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 }); // Max Age is in milliseconds (1 hour in this example)
+         
+        res.redirect('/admin')
+    } else {
+        // Invalid credentials
+        res.status(401).json({ message: 'Invalid email or password' });
+    }
+});
+
+
+app.get('/download', authenticate, (req, res) => {
+    try {
+        // Read the JSON file
+        const jsonData = require(filePath);
+        const messages = [];
+        const pushMessages = [];
+
+        // Separate messages based on the isAdmin property
+        jsonData.forEach(element => {
+            if (element.isAdmin) {
+                pushMessages.push(element);
+            } else {
+                messages.push(element);
+            }
+        });
+
+        // Set response headers for file download
+        res.setHeader('Content-Disposition', 'attachment; filename=messages.json');
+        res.setHeader('Content-Type', 'application/json');
+
+      
+
+        // Create an object containing both types of messages
+        const result = {
+            pushMessages: pushMessages,
+            messages: messages
+        };
+
+        // Send the JSON data as a response
+        res.json(result);
+        
+    } catch (error) {
+        // Handle errors when reading the JSON file
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 
 
 // Create a set to store emitted users

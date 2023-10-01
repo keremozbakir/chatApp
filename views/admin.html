@@ -18,6 +18,7 @@
             <div class="card">
                 <h5 class="card-header">Push Messages</h5>
                 <div class="card-body">
+                    <button type="submit" id="downloadMessages" class="btn btn-secondary downloadMessages">Download all messages</button>
                     <div id="pushMessages">
                         <div class="alert alert-light alert-dismissible fade show" role="alert">
                             Example Push message
@@ -34,8 +35,11 @@
                     <div class="input-group">
                         <input type="text" class="form-control" id="pushInput" placeholder="Type your message here...">
                         <button type="submit" id="pushSubmit" class="btn btn-primary pushSend">Send</button>
+                       
                     </div>
+                    
                 </div>
+                
             </div>
         </div>
     </div>
@@ -54,6 +58,13 @@
         sendPushMsg();
     });
 </script>
+
+<script>
+    var downloadMessagesButton = document.querySelector('.downloadMessages');
+    downloadMessagesButton.addEventListener('click', function() {
+        downloadMessages();
+     });
+ </script>
 
  </body>
 </html>
