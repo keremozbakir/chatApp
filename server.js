@@ -1,111 +1,37 @@
-// Import required modules
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const fs = require('fs');
-const { filterMessages } = require('./helpers/helperFunctions'); 
+const { addNewMessage,allMessages,deleteMessagesByIds} = require('./helpers/helperFunctions'); 
 const { authenticate} = require('./middlewares/auth')
-const jwt = require('jsonwebtoken');
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const secretkey = 'benimadimkerem'
 const cors = require('cors'); 
+const server = http.createServer(app);
+const filePath = './public/messages.json';
+const io = socketIo(server);
+const downloadRoutes = require('./Route/download')
+const adminRoutes = require('./Route/admin')
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.json()); // Enable JSON request body parsing middleware
+app.use(express.json());  
 app.use(cors());
 require('dotenv').config(); 
-// Create an HTTP server by passing the Express app
-const server = http.createServer(app);
-const filePath = './public/messages.json';
-// Create a Socket.io instance by passing the server
-const io = socketIo(server);
+ 
+
+
+
+//Routes
+app.use('/download',authenticate, downloadRoutes);
+app.use('/admin',authenticate,   adminRoutes);
 
 // Serve the client-side HTML file on the root URL
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/index.html');
 });
-
-
-// Serve the client-side HTML file on the root URL
-app.get('/admin', authenticate,(req, res) => {
-    res.sendFile(__dirname + '/views/admin.html');
-});
-
-// Render login page
-app.get('/login', (req, res) => {
-    res.sendFile(__dirname + '/views/login.html');
-});
-
-
-app.post('/login', (req, res) => {
-    const {email,password} =req.body;
-  
-    const hardcodedEmail =process.env.ADMIN_EMAIL;
-    const hardcodedPassword =process.env.ADMIN_PASSWORD;
-
-    // Check if the provided email and password match the hardcoded values
-    if (email === hardcodedEmail && password === hardcodedPassword) {
-        // Valid credentials, create a JWT token
-        const user = {
-            email: hardcodedEmail
-        };
-        const token = jwt.sign(user, secretkey, { expiresIn: '1h' });
-
-        // Set the JWT token as a cookie
-        res.cookie('jwt', token, { httpOnly: true, maxAge: 3600000 }); // Max Age is in milliseconds (1 hour in this example)
-         
-        res.redirect('/admin')
-    } else {
-        // Invalid credentials
-        res.status(401).json({ message: 'Invalid email or password' });
-    }
-});
-
-
-app.get('/download', authenticate, (req, res) => {
-    try {
-       
-        const jsonData = require(filePath);
-        const messages = [];
-        const pushMessages = [];
-
-        // Separate messages based on the isAdmin property
-        jsonData.forEach(element => {
-            if (element.isAdmin) {
-                pushMessages.push(element);
-            } else {
-                messages.push(element);
-            }
-        });
-
-        // Set response headers for file download
-        res.setHeader('Content-Disposition', 'attachment; filename=messages.json');
-        res.setHeader('Content-Type', 'application/json');
-
-      
-
-        // Create an object containing both types of messages
-        const result = {
-            pushMessages: pushMessages,
-            messages: messages
-        };
-
-        // Send the JSON data as a response
-        res.json(result);
-        
-    } catch (error) {
-        // Handle errors when reading the JSON file
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-
-
 
 // Create a set to store emitted users
 const emittedUsers = new Set();
@@ -123,8 +49,6 @@ io.on('connection', (socket) => {
         
     }
     
-    
-     
     // Handle messages from clients
     socket.on('chat message', (msg) => {
         io.emit('chat message', msg);   // Broadcast the message to all connected clients
@@ -140,8 +64,6 @@ io.on('connection', (socket) => {
         addNewMessage(incomingMessage)
     })
 
-    
-
     socket.on('delete push from dom',incomingIDS=>{
         io.emit('delete push from dom',incomingIDS)
         deleteMessagesByIds(incomingIDS)
@@ -149,16 +71,7 @@ io.on('connection', (socket) => {
     })
 });
 
-// Start the server and listen on port 3000
-server.listen(process.env.PORT || 3000, () => {
-    console.log('Server listening on :'+process.env.PORT);
-});
-
-
-
- 
 let isProcessing = false;
-
 fs.watch(filePath, (eventType, filename) => {
     if (!isProcessing && filename) {
         isProcessing = true; // Prevent trigger multiple times for single change 
@@ -193,91 +106,9 @@ fs.watch(filePath, (eventType, filename) => {
 let previousFileSize = fs.statSync(filePath).size;
 
 
-
+// Start the server and listen on port 3000
+server.listen(process.env.PORT || 3000, () => {
+    console.log('Server listening on :'+process.env.PORT);
+});
 
  
-function addNewMessage(newObject) {
-    
-     
-    // Read the existing JSON data from the file
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error(`Error reading file: ${err}`);
-            return;
-        }
-        newObject.id = generateRandomInteger()
-        let messages = JSON.parse(data); // Parse the JSON data into an array of objects
-        messages.push(newObject);
-        let updatedData = JSON.stringify(messages, null, 4); // Convert the updated array back to JSON format
-
-        // Write the updated JSON data back to the file
-        fs.writeFile(filePath, updatedData, (err) => {
-            if (err) {
-                console.error(`Error writing file: ${err}`);
-            } else {
-                console.log('Object appended successfully.');
-            }
-        });
-    });
-}
-
-function generateRandomInteger() {
-    const min = 1000000; // Minimum 7-digit number
-    const max = 9999999; // Maximum 7-digit number
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function allMessages() {
-    try {
-        const jsonData = fs.readFileSync(filePath, 'utf8');
-        const messages = JSON.parse(jsonData);
-        return filterMessages(messages,-10)
-    } catch (error) {
-        console.error('Error reading JSON file:', error);
-        return null;
-    }
-}
-
-
-function deleteMessagesByIds(idsToDelete) {
-    // Read the existing JSON data from the file
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.log(`Error reading file: ${err}`);
-            return;
-        }
-        let messages = JSON.parse(data); // Parse the JSON data into an array of objects
-
-        // Iterate through the array of IDs to delete
-        idsToDelete.forEach(idToDelete => {
-            // Find the index of the object with the specified id
-            const indexToDelete = messages.findIndex(message => message.id === idToDelete);
-
-            if (indexToDelete !== -1) {
-                // Remove the object from the array
-                messages.splice(indexToDelete, 1);
-                console.log(`Object with id ${idToDelete} deleted successfully.`);
-            } else {
-                console.log(`Object with id ${idToDelete} not found.`);
-            }
-        });
-
-        // Convert the updated array back to JSON format
-        let updatedData = JSON.stringify(messages, null, 4);
-
-        // Write the updated JSON data back to the file
-        fs.writeFile(filePath, updatedData, (err) => {
-            if (err) {
-                console.error(`Error writing file: ${err}`);
-            } else {
-                console.log(`All specified objects deleted successfully.`);
-            }
-        });
-    });
-}
-
-
-
-
-
-

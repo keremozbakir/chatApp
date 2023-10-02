@@ -32,7 +32,7 @@ socket.on('delete push from dom',incomingIDS=>{
  
 
 function addMessageToListClient(messageObject, messageType ) {
- 
+    
     const messagesList = document.getElementById(messageType);
     const listItem = document.createElement('div');
     listItem.textContent = messageObject.message;
@@ -42,10 +42,12 @@ function addMessageToListClient(messageObject, messageType ) {
     
     if(messageType==='chatMessages'){ // limit only chat messages not push messages
         // Get all list items in the messages list
-         const listItems = Array.from(messagesList.getElementsByTagName('li'));
-    
+        
+        const listItems = Array.from(messagesList.getElementsByTagName('div'));
+        console.log(listItems.length)
         // If there are more than `maxMessage` list items, remove the first ones
-        if (listItems.length > maxMessage) {
+        if (listItems.length >= maxMessage) {
+            console.log("deleting first message....")
             listItems.slice(0, listItems.length - maxMessage).forEach(item => item.remove());
         }
     }
@@ -82,7 +84,7 @@ function loadMoreMessage() { // Option to load additional 5 more messages .Defau
 
 function loginUser(email, password) {
     
-    fetch('/login', {
+    fetch('/admin/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

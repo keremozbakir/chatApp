@@ -1,8 +1,12 @@
 const jwt = require("jsonwebtoken")
 
 function authenticate(req, res, next) {
+   
+    if (req.path === '/login') { // Let user go to hte login page
+        return next();
+    }
     const token = req.cookies.jwt;
-    if (token == null) return res.redirect("/login"); // Unauthorized if token is not present
+    if (token == null) return res.redirect("/admin/login"); // Unauthorized if token is not present
 
     jwt.verify(token, process.env.API_KEY, (err, user) => {
         if (err) return res.sendStatus(403); // Forbidden if token is invalid
