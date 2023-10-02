@@ -27,13 +27,12 @@ socket.on('updateMessages',updatedMessage=>{
 })
  
 socket.on('delete push from dom',incomingIDS=>{
-    console.log('delete push from dom running client.js')
-    deletePushMessageView(incomingIDS)
+     deletePushMessageView(incomingIDS)
 })
  
 
 function addMessageToListClient(messageObject, messageType ) {
-    console.log('addMessage function running!', messageObject.message );
+ 
     const messagesList = document.getElementById(messageType);
     const listItem = document.createElement('div');
     listItem.textContent = messageObject.message;
@@ -102,7 +101,7 @@ function loginUser(email, password) {
         }
     })
     .catch(error => {
-        // Handle errors if any
+        
         console.error('Error:', error);
     });
 }

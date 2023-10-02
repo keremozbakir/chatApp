@@ -68,7 +68,7 @@ app.post('/login', (req, res) => {
 
 app.get('/download', authenticate, (req, res) => {
     try {
-        // Read the JSON file
+       
         const jsonData = require(filePath);
         const messages = [];
         const pushMessages = [];
@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
     if (!emittedUsers.has(socket.id)) {
         // Emit the message to the user
         console.log('A new user connected with id : ',socket.id);
-        const oldMessages = allMessages();
+        const oldMessages = allMessages(); // Load messages from database
         io.emit('loadMessages',oldMessages) 
         emittedUsers.add(socket.id);
         console.log('all users: ',emittedUsers)
@@ -127,10 +127,7 @@ io.on('connection', (socket) => {
      
     // Handle messages from clients
     socket.on('chat message', (msg) => {
-        console.log('Message: ' + msg);
-
-        // Broadcast the message to all connected clients
-        io.emit('chat message', msg);
+        io.emit('chat message', msg);   // Broadcast the message to all connected clients
     });
 
     // Handle disconnections
@@ -143,11 +140,7 @@ io.on('connection', (socket) => {
         addNewMessage(incomingMessage)
     })
 
-    //new message change
-    socket.on('jsonFileChanged',updtedMessages=>{
-        console.log("updated messages")
-        console.log(updtedMessages)
-    })
+    
 
     socket.on('delete push from dom',incomingIDS=>{
         io.emit('delete push from dom',incomingIDS)
@@ -163,30 +156,7 @@ server.listen(process.env.PORT || 3000, () => {
 
 
 
-// // Watch for changes in the messages.json file
-// let isProcessing = false;
  
-// fs.watch(filePath, (eventType, filename) => {
-//     if (!isProcessing && filename ) {
-//         isProcessing = true; //Prevent trigger multiple times for single change 
-//         fs.readFile(filePath, (err, data) => {
-//             if (err) {
-//                 throw err;
-//             }
-//             const jsonData = JSON.parse(data);
-//             const lastMessage = jsonData[jsonData.length - 1];
-             
-//             io.emit('updateMessages', lastMessage);
-//             isProcessing = false;
-           
-         
-//         });
-//         console.log(`File ${filename} changed: ${eventType}`);
-//         console.log('-----------------------------------------------------')
-//     }  
-// });
-
-// Watch for changes in the messages.json file
 let isProcessing = false;
 
 fs.watch(filePath, (eventType, filename) => {
@@ -273,7 +243,7 @@ function deleteMessagesByIds(idsToDelete) {
     // Read the existing JSON data from the file
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
-            console.error(`Error reading file: ${err}`);
+            console.log(`Error reading file: ${err}`);
             return;
         }
         let messages = JSON.parse(data); // Parse the JSON data into an array of objects

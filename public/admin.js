@@ -17,10 +17,7 @@ socket.on('loadMessages',allMessages=>{ // loads the old messages on first load
 })
 
 socket.on('updateMessages',updatedMessage=>{ // If new message is sent , updates the DOM
-  console.log("Update dom new message")
-  console.log(updatedMessage)
-   
-  if(updatedMessage.isAdmin){
+ if(updatedMessage.isAdmin){
     addMessageToList(updatedMessage)
   }
 })
@@ -28,21 +25,20 @@ socket.on('updateMessages',updatedMessage=>{ // If new message is sent , updates
 function addMessageToList(messageObject) {  //Update the DOM by creating HTML elements for each message
   // Check if message.isAdmin is false, and if so, don't add the message to the list
   if (messageObject.isAdmin === false) {
-      console.log("hereee 2")
       return false;
   }
-  console.log("hereee")
+ 
   const messagesList = document.getElementById('messagesList');
   const listItem = document.createElement('div');
   listItem.textContent = messageObject.message;
   listItem.className = 'single-message';
   listItem.setAttribute('data-message-id', messageObject.id);
-  console.log("hereee 3")
+  
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.className = 'messageCheckbox';
 
-  console.log("hereee 5")
+ 
   checkbox.setAttribute('data-message-id', messageObject.id);
   checkbox.style.float = 'right';
 
@@ -52,17 +48,13 @@ function addMessageToList(messageObject) {  //Update the DOM by creating HTML el
       const messageId = parseInt(this.getAttribute('data-message-id'));
 
       if (this.checked) {
-          // Add checked message ID to the array if it is checked
-          checkedMessageIds.push(messageId);
-          console.log('Checkbox with message-id ' + messageId + ' is checked.');
+          checkedMessageIds.push(messageId); // Add checked message ID to the array if it is checked
       } else {
-          // Remove unchecked message ID from the array if it is unchecked
-          const index = checkedMessageIds.indexOf(messageId);
+          const index = checkedMessageIds.indexOf(messageId); // Remove unchecked message ID from the array if it is unchecked
           if (index !== -1) {
               checkedMessageIds.splice(index, 1);
           }
-          console.log('Checkbox with message-id ' + messageId + ' is unchecked.');
-          // Do something when the checkbox is unchecked
+         
       }
 
       console.log('Checked users are: ', checkedMessageIds);
@@ -92,7 +84,7 @@ function deletePushMessageView() {  //  remove element from the DOM
       var parentElement = element.parentNode;
       parentElement.removeChild(element);
   });
-  console.log('delete push from dom adminjs running')
+   
   socket.emit('delete push from dom',checkedMessageIds) // passing list of message ids of push messages to be deleted from DOM
 }
 
