@@ -150,9 +150,8 @@ io.on('connection', (socket) => {
     })
 
     socket.on('delete push from dom',incomingIDS=>{
-        console.log("on ...")
         io.emit('delete push from dom',incomingIDS)
-        console.log("emit ...")
+        deleteMessagesByIds(incomingIDS)
 
     })
 });
@@ -164,44 +163,82 @@ server.listen(process.env.PORT || 3000, () => {
 
 
 
+// // Watch for changes in the messages.json file
+// let isProcessing = false;
+ 
+// fs.watch(filePath, (eventType, filename) => {
+//     if (!isProcessing && filename ) {
+//         isProcessing = true; //Prevent trigger multiple times for single change 
+//         fs.readFile(filePath, (err, data) => {
+//             if (err) {
+//                 throw err;
+//             }
+//             const jsonData = JSON.parse(data);
+//             const lastMessage = jsonData[jsonData.length - 1];
+             
+//             io.emit('updateMessages', lastMessage);
+//             isProcessing = false;
+           
+         
+//         });
+//         console.log(`File ${filename} changed: ${eventType}`);
+//         console.log('-----------------------------------------------------')
+//     }  
+// });
+
 // Watch for changes in the messages.json file
 let isProcessing = false;
+
 fs.watch(filePath, (eventType, filename) => {
     if (!isProcessing && filename) {
-        isProcessing = true; //Prevent trigger multiple times for single change 
-        fs.readFile(filePath, (err, data) => {
+        isProcessing = true; // Prevent trigger multiple times for single change 
+        fs.stat(filePath, (err, stats) => {
             if (err) {
                 throw err;
             }
-            const jsonData = JSON.parse(data);
-            const lastMessage = jsonData[jsonData.length - 1];
-            io.emit('updateMessages', lastMessage);
-            isProcessing = false;
+
+            // Compare the current file size with the previous size
+            if (stats.size > previousFileSize) {
+                // Read the new data and emit events
+                fs.readFile(filePath, (err, data) => {
+                    if (err) {
+                        throw err;
+                    }
+                    const jsonData = JSON.parse(data);
+                    const lastMessage = jsonData[jsonData.length - 1];
+                    io.emit('updateMessages', lastMessage);
+                    isProcessing = false;
+                });
+                previousFileSize = stats.size; // Update the previous file size
+            } else {
+                isProcessing = false; // Reset the flag for deletion events
+            }
         });
         console.log(`File ${filename} changed: ${eventType}`);
-    }  
+         
+    }
 });
+
+// Initialize previous file size
+let previousFileSize = fs.statSync(filePath).size;
+
+
+
 
  
 function addNewMessage(newObject) {
     
-    console.log("ADDING TO MESSAGES JSON")
+     
     // Read the existing JSON data from the file
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
             console.error(`Error reading file: ${err}`);
             return;
         }
-
         newObject.id = generateRandomInteger()
-        // Parse the JSON data into an array of objects
-        let messages = JSON.parse(data);
-
-        // Append the new object to the array
+        let messages = JSON.parse(data); // Parse the JSON data into an array of objects
         messages.push(newObject);
-
-        // Convert the updated array back to JSON format
-        let updatedData = JSON.stringify(messages, null, 4);
+        let updatedData = JSON.stringify(messages, null, 4); // Convert the updated array back to JSON format
 
         // Write the updated JSON data back to the file
         fs.writeFile(filePath, updatedData, (err) => {
@@ -230,3 +267,47 @@ function allMessages() {
         return null;
     }
 }
+
+
+function deleteMessagesByIds(idsToDelete) {
+    // Read the existing JSON data from the file
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error(`Error reading file: ${err}`);
+            return;
+        }
+        let messages = JSON.parse(data); // Parse the JSON data into an array of objects
+
+        // Iterate through the array of IDs to delete
+        idsToDelete.forEach(idToDelete => {
+            // Find the index of the object with the specified id
+            const indexToDelete = messages.findIndex(message => message.id === idToDelete);
+
+            if (indexToDelete !== -1) {
+                // Remove the object from the array
+                messages.splice(indexToDelete, 1);
+                console.log(`Object with id ${idToDelete} deleted successfully.`);
+            } else {
+                console.log(`Object with id ${idToDelete} not found.`);
+            }
+        });
+
+        // Convert the updated array back to JSON format
+        let updatedData = JSON.stringify(messages, null, 4);
+
+        // Write the updated JSON data back to the file
+        fs.writeFile(filePath, updatedData, (err) => {
+            if (err) {
+                console.error(`Error writing file: ${err}`);
+            } else {
+                console.log(`All specified objects deleted successfully.`);
+            }
+        });
+    });
+}
+
+
+
+
+
+
